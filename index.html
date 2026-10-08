@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A line that bends toward your cursor · Interaction recipes</title>
+<meta name="description" content="A divider that leans toward the pointer and wobbles back like a plucked string, with no overlay to steal clicks. A recipe by Miguel Clavel.">
+<style>
+  :root { --page: #F9F9FB; --ink: #1D1D21; --muted: #67676C; --link: #1F5FD1; }
+  @media (prefers-color-scheme: dark) { :root { --page: #0F0F11; --ink: #F5F5F7; --muted: #A3A3A8; --link: #7AAEFF; } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--page); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         display: grid; place-items: center; -webkit-font-smoothing: antialiased; }
+  main { width: min(760px, 100% - 48px); }
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; font-size: 17px; }
+  .row a { color: var(--link); text-decoration: none; font-weight: 600; }
+  .row span { color: var(--muted); font-size: 14px; }
+  .wave { display: block; width: 100%; height: 200px; margin: -84px 0; overflow: visible; }
+  .wave path { fill: none; stroke: var(--ink); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  .hint { position: fixed; left: 0; right: 0; bottom: 20px; text-align: center; font-size: 13px; color: var(--muted); }
+  .hint a { color: inherit; }
+  body.embed .hint { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <div class="row"><a href="#">Conversational Insurance Flow</a><span>Case study 01</span></div>
+  <svg class="wave" data-wave viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true"><path d="M0 150 Q500 150, 1000 150"/></svg>
+  <div class="row"><a href="#">Insurance Landing Page</a><span>Case study 02</span></div>
+  <svg class="wave" data-wave viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true"><path d="M0 150 Q500 150, 1000 150"/></svg>
+  <div class="row"><a href="#">Comparison System</a><span>Case study 03</span></div>
+</main>
+<p class="hint">Bring your mouse close to a line, then pull away. <a href="https://github.com/miguelclavel/wave-line">Code and prompt</a></p>
+<script>
+  const params = new URLSearchParams(location.search);
+  if (params.has('embed')) document.body.classList.add('embed');
+
+  // Each line is a quadratic curve with one control point. The pointer moves that
+  // point sideways (where the bend is) and outward (how deep it is).
+  const lines = [...document.querySelectorAll('[data-wave]')].map(svg => ({ svg, path: svg.querySelector('path'), ax: 0.5, amp: 0, t: Math.PI / 2, req: null, live: false }));
+  const draw = (it, v) => it.path.setAttribute('d', `M0 150 Q${(1000 * it.ax).toFixed(1)} ${(150 + v * 1.15).toFixed(1)}, 1000 150`);
+
+  // Letting go: overshoot, come back, overshoot less. Each bounce keeps 86% of the last.
+  const spring = it => {
+    draw(it, it.amp * Math.sin(it.t));
+    it.amp *= 0.86; it.t += 0.42;
+    if (Math.abs(it.amp) > 0.4) it.req = requestAnimationFrame(() => spring(it));
+    else { it.amp = 0; it.t = Math.PI / 2; it.req = null; draw(it, 0); }
+  };
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // No invisible box over the line: the page listens to the pointer, so the links
+  // beside the line never lose a click.
+  function move(x, y) {
+    for (const it of lines) {
+      const b = it.svg.getBoundingClientRect(), mid = b.top + b.height / 2, dy = y - mid;
+      const near = Math.abs(dy) < 110 && x > b.left - 20 && x < b.right + 20;
+      if (near) {
+        if (it.req) { cancelAnimationFrame(it.req); it.req = null; }
+        it.live = true; it.t = Math.PI / 2;
+        it.ax = Math.max(0, Math.min(1, (x - b.left) / b.width));
+        it.amp = Math.max(-48, Math.min(48, dy));
+        draw(it, it.amp);
+      } else if (it.live) {
+        it.live = false;
+        if (!it.req) it.req = requestAnimationFrame(() => spring(it));
+      }
+    }
+  }
+  if (!reduce) document.addEventListener('pointermove', e => move(e.clientX, e.clientY), { passive: true });
+
+  // ?demo bends the first line toward an imaginary pointer, for the README picture.
+  if (params.has('demo')) {
+    const b = lines[0].svg.getBoundingClientRect();
+    move(b.left + b.width * 0.62, b.top + b.height / 2 + 46);
+  }
+</script>
+</body>
+</html>
