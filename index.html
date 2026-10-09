@@ -21,17 +21,19 @@
   .hint { position: fixed; left: 0; right: 0; bottom: 20px; text-align: center; font-size: 13px; color: var(--muted); }
   .hint a { color: inherit; }
   body.embed .hint { display: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 </style>
 </head>
 <body>
 <main>
+  <h1 class="sr-only">A line that bends toward your cursor</h1>
   <div class="row"><a href="#">Conversational Insurance Flow</a><span>Case study 01</span></div>
   <svg class="wave" data-wave viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true"><path d="M0 150 Q500 150, 1000 150"/></svg>
   <div class="row"><a href="#">Insurance Landing Page</a><span>Case study 02</span></div>
   <svg class="wave" data-wave viewBox="0 0 1000 300" preserveAspectRatio="none" aria-hidden="true"><path d="M0 150 Q500 150, 1000 150"/></svg>
   <div class="row"><a href="#">Comparison System</a><span>Case study 03</span></div>
 </main>
-<p class="hint">Bring your mouse close to a line, then pull away. <a href="https://github.com/miguelclavel/wave-line">Code and prompt</a></p>
+<footer><p class="hint">Bring your mouse close to a line, then pull away. <a href="https://github.com/miguelclavel/wave-line">Code and prompt</a></p></footer>
 <script>
   const params = new URLSearchParams(location.search);
   if (params.has('embed')) document.body.classList.add('embed');
